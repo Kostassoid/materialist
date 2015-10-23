@@ -14,7 +14,7 @@ class Router(source: Source, target: Target, groupings: List[Grouping]) extends 
         .foreach { batch ⇒
           val toSend = batch.flatMap { record ⇒
             val key = /*if (config.preventKeyCollision) s"${r.key}-${r.stream}" else*/ record.key
-            groupings.flatMap(_.resolveGroup(record)).map(TargetRecord(_, key, record.value))
+            groupings.flatMap(_.resolveGroup(record.key)).map(TargetRecord(_, key, record.value))
           }
           target.push(toSend)
           source.commit()

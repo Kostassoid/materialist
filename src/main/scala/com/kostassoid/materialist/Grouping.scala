@@ -2,22 +2,25 @@ package com.kostassoid.materialist
 
 import scala.util.matching.Regex
 
-trait Grouping {
-  def resolveGroup(source: SourceRecord): Option[String]
+object Grouping {
+  def fromName(allow: List[Regex], exclude: List[Regex], groupName: String) =
+    new Grouping(allow, exclude, _ ⇒ groupName)
+
+  def fromRegex(allow: List[Regex], exclude: List[Regex], groupPattern: Regex) =
+  new Grouping(allow, exclude, k ⇒ groupPattern.findFirstMatchIn(k).get.group(1))
 }
 
-class RegexGrouping(pattern: Regex, skipUnmatched: Boolean) extends Grouping {
-  override def resolveGroup(source: SourceRecord) = {
-    pattern.findFirstIn(source.key).orElse {
-      if (!skipUnmatched) {
-        throw new Exception(s"Group cannot be extracted from ${source.key}. Failing.")
-      } else {
-        None
-      }
+class Grouping(allow: List[Regex], exclude: List[Regex], groupResolver: String ⇒ String) {
+  def resolveGroup(key: String): Option[String] = {
+    if (isAllowed(key) && !isExcluded(key)) Some(groupResolver(key)) else None
+  }
+
+  private def isAllowed(key: String) = {
+    allow match {
+      case Nil ⇒ true
+      case l ⇒ l.exists(_.findFirstIn(key).isDefined)
     }
   }
-}
 
-class FixedGrouping(value: String) extends Grouping {
-  override def resolveGroup(source: SourceRecord) = Some(value)
+  private def isExcluded(key: String) = exclude.exists(_.findFirstIn(key).isDefined)
 }

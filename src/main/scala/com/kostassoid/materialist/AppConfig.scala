@@ -7,10 +7,16 @@ object AppConfig {
 
   def getGroupings(config: Config): List[Grouping] = {
     config.root().keySet().map(config.getConfig).map { g ⇒
-      g.getString("type") match {
-        case "fixed" ⇒ new FixedGrouping(g.getString("value"))
-        case "regex" ⇒ new RegexGrouping(g.getString("pattern").r, g.getBoolean("skip-unmatched"))
-        case x ⇒ throw new Exception(s"Unknown grouping type: $x")
+      val allow = if (g.hasPath("allow")) g.getStringList("allow").map(_.r).toList else Nil
+      val exclude = if (g.hasPath("exclude")) g.getStringList("exclude").map(_.r).toList else Nil
+
+      if (g.hasPath("group.pattern")) {
+        Grouping.fromRegex(allow, exclude, g.getString("group.pattern").r)
+      } else
+      if (g.hasPath("group.name")) {
+        Grouping.fromName(allow, exclude, g.getString("group.name"))
+      } else {
+        throw new Exception("Missing [group.name] or [group.regex] in grouping specification.")
       }
     } toList
   }
@@ -18,7 +24,6 @@ object AppConfig {
   def apply(config: Config) =
     new AppConfig(
       groupings = getGroupings(config.getConfig("groupings")),
-      preventKeyCollision = config.getString("key.prevent-collision").toBoolean,
       sourceConfig = config.getConfig("source"),
       sourceFactory = Class.forName(config.getString("source.factory.class")).newInstance().asInstanceOf[SourceFactory],
       targetConfig = config.getConfig("target"),
@@ -27,10 +32,9 @@ object AppConfig {
 }
 
 case class AppConfig(
-                      groupings: List[Grouping],
-                      preventKeyCollision: Boolean,
-                      sourceConfig: Config,
-                      sourceFactory: SourceFactory,
-                      targetConfig: Config,
-                      targetFactory: TargetFactory
+  groupings: List[Grouping],
+  sourceConfig: Config,
+  sourceFactory: SourceFactory,
+  targetConfig: Config,
+  targetFactory: TargetFactory
 )

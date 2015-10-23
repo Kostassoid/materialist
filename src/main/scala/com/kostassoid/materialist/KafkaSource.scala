@@ -19,7 +19,7 @@ class KafkaSourceFactory extends SourceFactory with Logging {
 
     log.debug(s"Got properties: $consumerProps")
 
-    new KafkaSource(new ConsumerConfig(consumerProps), config.getString("kafka.topic"), config.getLong("batch.size"), config.getLong("batch.timeout"))
+    new KafkaSource(new ConsumerConfig(consumerProps), config.getString("kafka.topic"), config.getLong("batch.size"), config.getLong("batch.wait.ms"))
   }
 }
 
