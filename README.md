@@ -31,28 +31,28 @@ Groupings define how source keys should be distributed among groups (i.e. MongoD
 
 Key | Description | Example
 ----|-------------|--------
-group.name | Fixed group name (plain string) | billing
-group.pattern | Group pattern (regex) to dinamically extract group name from key | ^project-(\w+)$
-allow | A list of patterns (regex) for allowed keys. If omitted any key is allowed | [ "^this", "that$"]
-exclude | A list of patterns (regex) for excluded keys. If omitted no keys are excluded | [ ".*-secret$" ]
+group.name | Fixed group name (plain string) | `billing`
+group.pattern | Group pattern (regex) to dinamically extract group name from key | `^project-(\w+)$`
+allow | A list of patterns (regex) for allowed keys. If omitted any key is allowed | `[ "^this", "that$"]`
+exclude | A list of patterns (regex) for excluded keys. If omitted no keys are excluded | `[ ".*-secret$" ]`
 
 ### source
 
 Key | Description | Example
 ----|-------------|--------
-factory.class | Factory class for source adapter. Currently only Kafka is supported. | com.kostassoid.materialist.KafkaSourceFactory
-batch.size | Max # of messages in one batch | 1000
-batch.wait.ms | Max time to wait before sending next batch | 1000
-kafka.topc | Source topic name | changelog-topic
+factory.class | Factory class for source adapter. Currently only Kafka is supported. | `com.kostassoid.materialist.KafkaSourceFactory`
+batch.size | Max # of messages in one batch | `1000`
+batch.wait.ms | Max time to wait before sending next batch | `1000`
+kafka.topc | Source topic name | `changelog-topic`
 kafka.consumer.* | See [Kafka docs](http://kafka.apache.org/documentation.html#consumerconfigs) |
 
 ### target
 
 Key | Description | Example
 ----|-------------|--------
-factory.class | Factory class for target adapter. Currently only MongoDb is supported. | com.kostassoid.materialist.MongoDbTargetFactory
-mongodb.connection | Connection string | mongodb://localhost:27017
-mongodb.database | Database name | materialist
+factory.class | Factory class for target adapter. Currently only MongoDb is supported. | `com.kostassoid.materialist.MongoDbTargetFactory`
+mongodb.connection | Connection string | `mongodb://localhost:27017`
+mongodb.database | Database name | `materialist`
 
 ## Rebuilding views
 
