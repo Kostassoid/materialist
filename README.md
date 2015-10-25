@@ -30,7 +30,7 @@ To run the service, simply run:
 Groupings define which keys must be included or excluded. They also allow to specify group name or group pattern (group == MongoDb collection). Multiple groupings are allowed.
 
 Key | Description | Example
-----------------------------------
+----|-------------|--------
 group.name | Fixed group name (plain string) | billing
 group.pattern | Group pattern (regex) to dinamically extract group name from key | ^project-(\w+)$
 allow | A list of patterns (regex). If any matches the key the key is allowed, if omitted any key is allowed | [ "^this", "that$"]
