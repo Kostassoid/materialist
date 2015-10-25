@@ -1,9 +1,9 @@
 Materialist
 ===========
 
-Builds and maintains materialized views from events stream stored in [Kafka](http://kafka.apache.org/) compacted topics (event sourcing). Allows to easily query and analyze data stored by applications which embraced the idea of distributed data (such as [Samza](https://samza.apache.org/)).
+Builds and maintains materialized views from event streams stored in [Kafka](http://kafka.apache.org/) compacted topics (event sourcing). Allows to easily query and analyze data stored by applications which embraced the idea of distributed data (such as [Samza](https://samza.apache.org/)).
 
-Currently supports [MongoDb](https://www.mongodb.org/) as a target storage. Hence, while any value formats are supported, only JSON allows to use full power of MongoDb querying engine.
+Currently supports [MongoDb](https://www.mongodb.org/) as a target storage. Hence, while any value formats are supported, only JSON will allow to use full power of MongoDb query engine.
 
 ## Usage
 
@@ -27,18 +27,38 @@ To run the service, simply run:
 
 ### groupings
 
-Groupings define which keys must be included or excluded. They also allow to specify group name or group pattern (group == MongoDb collection). Multiple groupings are allowed.
+Groupings define how source keys should be distributed among groups (i.e. MongoDb collections). They also allow to filter out the keys you're not interested in. You can choose between fixed and dynamically resolved group names. Multiple groupings per process are allowed.
 
 Key | Description | Example
 ----|-------------|--------
 group.name | Fixed group name (plain string) | billing
 group.pattern | Group pattern (regex) to dinamically extract group name from key | ^project-(\w+)$
-allow | A list of patterns (regex). If any matches the key the key is allowed, if omitted any key is allowed | [ "^this", "that$"]
-exclude | A list of patterns (regex). If any matches the key the key is excluded, if omitted no keys are excluded | [ ".*-secret$ ]
+allow | A list of patterns (regex) for allowed keys. If omitted any key is allowed | [ "^this", "that$"]
+exclude | A list of patterns (regex) for excluded keys. If omitted no keys are excluded | [ ".*-secret$" ]
 
 ### source
 
+Key | Description | Example
+----|-------------|--------
+factory.class | Factory class for source adapter. Currently only Kafka is supported. | com.kostassoid.materialist.KafkaSourceFactory
+batch.size | Max # of messages in one batch | 1000
+batch.wait.ms | Max time to wait before sending next batch | 1000
+kafka.topc | Source topic name | changelog-topic
+kafka.consumer | See [Kafka docs](http://kafka.apache.org/documentation.html#consumerconfigs) |
+
 ### target
+
+Key | Description | Example
+----|-------------|--------
+factory.class | Factory class for target adapter. Currently only MongoDb is supported. | com.kostassoid.materialist.MongoDbTargetFactory
+mongodb.connection | Connection string | mongodb://localhost:27017
+mongodb.database | Database name | materialist
+
+## Rebuilding views
+
+When groupings settings have been changed, it is most likely that the views have to be rebuilt from scratch. To do this, simply remove collections from MongoDb and current offsets from ZooKeeper (using correct Zk host and Kafka group.id):
+
+`zkCli.sh -server localhost:2181 rmr /kafka/consumers/materialist`
 
 ## Limitations
 
