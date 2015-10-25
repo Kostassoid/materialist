@@ -21,3 +21,5 @@ project/plugins/project/
 .project
 .settings
 .cache
+
+env.local.conf

@@ -5,8 +5,8 @@ import scala.collection.JavaConversions._
 
 object AppConfig {
 
-  def getGroupings(config: Config): List[Grouping] = {
-    config.root().keySet().map(config.getConfig).map { g ⇒
+  def getGroupings(configs: List[Config]): List[Grouping] = {
+    configs.map { g ⇒
       val allow = if (g.hasPath("allow")) g.getStringList("allow").map(_.r).toList else Nil
       val exclude = if (g.hasPath("exclude")) g.getStringList("exclude").map(_.r).toList else Nil
 
@@ -18,12 +18,12 @@ object AppConfig {
       } else {
         throw new Exception("Missing [group.name] or [group.regex] in grouping specification.")
       }
-    } toList
+    }
   }
 
   def apply(config: Config) =
     new AppConfig(
-      groupings = getGroupings(config.getConfig("groupings")),
+      groupings = getGroupings(config.getConfigList("groupings").toList),
       sourceConfig = config.getConfig("source"),
       sourceFactory = Class.forName(config.getString("source.factory.class")).newInstance().asInstanceOf[SourceFactory],
       targetConfig = config.getConfig("target"),

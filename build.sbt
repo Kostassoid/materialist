@@ -25,11 +25,20 @@ javacOptions ++= Seq(
   "-Xlint:deprecation"
 )
 
+packSettings
+
+packMain := Map(
+  "start" → "-Xmx256m -Dfile.encoding=UTF-8 -Dlogback.configurationFile=\"${PROG_HOME}/conf/logback.xml\" -Dconfig.path=\"${PROG_HOME}/conf/env.$ENV.conf\" com.kostassoid.materialist.MainApp"
+)
+
+packResourceDir += (baseDirectory.value / "src/main/resources" -> "conf")
+
+packJarNameConvention := "full"
+
 libraryDependencies ++= Seq(
   "org.apache.kafka" %% "kafka" % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12"),
-  "org.mongodb" % "mongo-java-driver" % "3.1.0",
+  "org.mongodb.scala" %% "mongo-scala-driver" % "1.0.0",
   "com.typesafe" % "config" % "1.2.1",
   "ch.qos.logback" % "logback-classic" % "1.1.3",
   "org.scalatest" %% "scalatest" % "2.2.1" % "test"
 )
-    

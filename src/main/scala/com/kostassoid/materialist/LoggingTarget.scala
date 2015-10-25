@@ -12,7 +12,11 @@ class LoggingTarget extends Target with Logging {
 
   override def stop(): Unit = {}
 
-  override def push(docs: Iterable[TargetRecord]): Unit = {
-    docs.foreach(d ⇒ log.info(d.toString))
+  override def push(group: String, records: Iterable[Operation]): Unit = {
+    records.foreach(d ⇒ log.info(d.toString))
+  }
+
+  override def flush(): Unit = {
+    log.info("Flushing")
   }
 }

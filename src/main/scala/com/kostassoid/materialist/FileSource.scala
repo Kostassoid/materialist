@@ -27,31 +27,16 @@ class FileSource(file: File) extends Source with Logging {
     }
   }
 
-  override def iterator: Iterator[List[SourceRecord]] = {
-    new Iterator[List[SourceRecord]] {
-
-      private var isClosed = false
-
-      override def hasNext: Boolean = !isClosed
-
-      override def next(): List[SourceRecord] = {
-        try {
-          stream.readLine() match {
-            case null ⇒
-              log.trace("Nothing to read. Waiting 1000 ms.")
-              Thread.sleep(1000)
-              List.empty
-            case l ⇒
-              offset += l.getBytes.length
-              val Array(key, message) = l.trim().split("->", 2)
-              List(SourceRecord(key, message, file.getName))
-          }
-        } catch {
-          case e: InterruptedException ⇒
-            isClosed = true
-            List.empty
-        }
-      }
+  override def pull(): Iterable[Operation] = {
+    stream.readLine() match {
+      case null ⇒
+        log.trace("Nothing to read. Waiting 1000 ms.")
+        Thread.sleep(1000)
+        List.empty
+      case l ⇒
+        offset += l.getBytes.length
+        val Array(key, message) = l.trim().split("->", 2)
+        List(Upsert(key, file.getName, message))
     }
   }
 
