@@ -1,7 +1,7 @@
 Materialist [![Build Status](https://travis-ci.org/Kostassoid/materialist.svg)](https://travis-ci.org/Kostassoid/materialist)
 ===========
 
-Builds and maintains materialized views from event streams stored in [Kafka](http://kafka.apache.org/) compacted topics (event sourcing). Allows to easily query and analyze data stored by applications which embraced the idea of distributed data (such as [Samza](https://samza.apache.org/)).
+Builds and maintains materialized views from changelog stream stored in [Kafka](http://kafka.apache.org/) compacted topics (event sourcing). Allows to easily query and analyze data stored by applications which embraced the idea of distributed data (such as [Samza](https://samza.apache.org/)).
 
 Currently supports [MongoDb](https://www.mongodb.org/) as a target storage. Hence, while any value formats are supported, only JSON will allow to use full power of MongoDb query engine.
 
@@ -44,7 +44,7 @@ factory.class | Factory class for source adapter. Currently only Kafka is suppor
 batch.size | Max # of messages in one batch | 1000
 batch.wait.ms | Max time to wait before sending next batch | 1000
 kafka.topc | Source topic name | changelog-topic
-kafka.consumer | See [Kafka docs](http://kafka.apache.org/documentation.html#consumerconfigs) |
+kafka.consumer.* | See [Kafka docs](http://kafka.apache.org/documentation.html#consumerconfigs) |
 
 ### target
 
