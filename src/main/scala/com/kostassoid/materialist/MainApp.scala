@@ -6,26 +6,25 @@ import com.typesafe.config.ConfigFactory
 
 object MainApp extends App with Logging {
 
-  log.info("Materialist is starting.")
+  log.info("Materialist started.")
+
+  val configPath = Option(System.getProperty("config.path"))
 
   val config = AppConfig(
-    ConfigFactory.parseFile(new File(System.getProperty("config.path")))
+    configPath.map(c ⇒ ConfigFactory.parseFile(new File(c))).getOrElse(ConfigFactory.empty())
       .withFallback(ConfigFactory.load())
       .getConfig("materialist")
   )
 
-  val thisThread = Thread.currentThread()
+  val coordinator = new Coordinator(config)
+
   sys.addShutdownHook {
     log.info("Received shutdown signal. Closing.")
-    thisThread.interrupt()
-    thisThread.join()
+    coordinator.shutdown()
   }
 
-  val source = config.sourceFactory.getSource(config.sourceConfig)
-  val target = config.targetFactory.getTarget(config.targetConfig)
+  coordinator.run()
 
-  new Coordinator(source, target, config.groupings).run()
-
-  log.info("Materialist finished.")
+  log.info("Materialist is stopped.")
 }
 

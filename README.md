@@ -25,25 +25,21 @@ To run the service, simply run:
 
 ## Configuration
 
-### groupings
+### routes
 
-Groupings define how source keys should be distributed among groups (i.e. MongoDb collections). They also allow to filter out the keys you're not interested in. You can choose between fixed and dynamically resolved group names. Multiple groupings per process are allowed.
+Routes define the source and the destination of data. Each route is processed separately.
 
 Key | Description | Example
 ----|-------------|--------
-group.name | Fixed group name (plain string) | billing
-group.pattern | Group pattern (regex) to dinamically extract group name from key | ^project-(\w+)$
-allow | A list of patterns (regex) for allowed keys. If omitted any key is allowed | [ "^this", "that$"]
-exclude | A list of patterns (regex) for excluded keys. If omitted no keys are excluded | [ ".*-secret$" ]
+from | Source stream name (e.g. topic for Kafka source) | billing
+to | Target stream name, if "_" then same as "from" | _
+match.key | A regex pattern to match keys. If omitted any key is allowed. | [ "^this", "that$"]
 
 ### source
 
 Key | Description | Example
 ----|-------------|--------
 factory.class | Factory class for source adapter. Currently only Kafka is supported. | com.kostassoid.materialist.KafkaSourceFactory
-batch.size | Max # of messages in one batch | 1000
-batch.wait.ms | Max time to wait before sending next batch | 1000
-kafka.topc | Source topic name | changelog-topic
 kafka.consumer | See [Kafka docs](http://kafka.apache.org/documentation.html#consumerconfigs) |
 
 ### target
@@ -51,19 +47,20 @@ kafka.consumer | See [Kafka docs](http://kafka.apache.org/documentation.html#con
 Key | Description | Example
 ----|-------------|--------
 factory.class | Factory class for target adapter. Currently only MongoDb is supported. | com.kostassoid.materialist.MongoDbTargetFactory
+batch.size | Max # of messages in one batch | 1000
 mongodb.connection | Connection string | mongodb://localhost:27017
 mongodb.database | Database name | materialist
 
 ## Rebuilding views
 
-When groupings settings have been changed, it is most likely that the views have to be rebuilt from scratch. To do this, simply remove collections from MongoDb and current offsets from ZooKeeper (using correct Zk host and Kafka group.id):
+When routes have been changed, it is most likely that the views have to be rebuilt from scratch. To do this, simply remove collections from MongoDb and current offsets from ZooKeeper (using correct Zk host and Kafka group.id):
 
-`zkCli.sh -server localhost:2181 rmr /kafka/consumers/materialist`
+`zkCli.sh -server localhost:2181 rmr /kafka/consumers/materialist-$topic`
 
 ## Limitations
 
 - Both key and value must be UTF-8 strings (no null keys obviously).
-- Kafka consumer currently uses single thread. In fact, the whole processing is done in single thread, except for the Kafka/MongoDb drivers.
+- Kafka consumer currently uses single thread per topic.
 - no metrics reporting yet
 - no key names conflict (same keys from different partitions) resolution yet
 

@@ -1,38 +1,60 @@
 package com.kostassoid.materialist
 
-class Coordinator(source: Source, target: Target, groupings: List[Grouping]) extends Logging {
+import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
+
+class Coordinator(config: AppConfig) extends Runnable with Logging {
+
+  lazy val workers = config.routes.map { route ⇒
+
+    val targetStream = route.to match {
+      case "_" ⇒ route.from
+      case _ ⇒ route.to
+    }
+
+    val operationPredicate: StorageOperation ⇒ Boolean = route.matchKey match {
+      case "_" ⇒
+        _ ⇒ true
+      case _ ⇒
+        val keyMatcher = route.matchKey.r
+        op ⇒ keyMatcher.pattern.matcher(op.key).matches()
+    }
+
+    val source = config.sourceFactory.getSource(config.sourceConfig, route.from)
+    val target = config.targetFactory.getTarget(config.targetConfig, targetStream)
+
+    new RouteWorker(Route(source, target, operationPredicate), config.checkpointInterval)
+  }
+
+  val pool = new ThreadPoolWatcherExecutor(config.routes.size)
 
   def run() = {
-    log.info(s"Starting source $source")
-    source.start()
-
-    log.info(s"Starting target $target")
-    target.start()
-
-
     try {
-      Iterator.continually(source.pull())
-        .filter(_.nonEmpty)
-        .foreach { batch ⇒
+      val futures = workers map { pool.submit }
 
-          // todo: optimize
-          batch.flatMap { r ⇒ groupings.flatMap(_.resolveGroup(r.key)).map(_ → r) }
-            .groupBy(_._1).map(gi ⇒ gi._1 → gi._2.map(_._2))
-            .foreach { gd ⇒
-              target.push(gd._1, gd._2)
-            }
-
-          target.flush()
-          source.commit()
-        }
+      pool.awaitTermination(Long.MaxValue, TimeUnit.DAYS) // todo: refactor
     } catch {
-      case _: InterruptedException ⇒ // ok
-      case e: Throwable ⇒ log.error("Unexpected exception. Closing.", e)
-    } finally {
-      log.info(s"Stopping source $source")
-      source.stop()
-      log.info(s"Stopping target $target")
-      target.stop()
+      case _: InterruptedException ⇒
     }
   }
+
+  def shutdown(): Unit = {
+    workers foreach { _.shutdown() }
+    pool.shutdown()
+    if (!pool.awaitTermination(5, TimeUnit.SECONDS)) {
+      pool.shutdownNow()
+    }
+  }
+
+  class ThreadPoolWatcherExecutor(threads: Int)
+    extends ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue()) {
+    override def afterExecute(runnable: Runnable, throwable: Throwable): Unit = {
+      super.afterExecute(runnable, throwable)
+      if (!isShutdown) {
+        log.warn("Shutting down pool due to premature worker completion.")
+        Coordinator.this.shutdown()
+      }
+    }
+  }
+
+
 }

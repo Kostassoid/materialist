@@ -3,14 +3,13 @@ package com.kostassoid.materialist
 import java.util.Properties
 
 import com.typesafe.config.Config
-import kafka.consumer.{ConsumerIterator, Consumer, ConsumerConfig}
+import kafka.consumer.{Consumer, ConsumerConfig, ConsumerIterator}
 import kafka.javaapi.consumer.ConsumerConnector
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable
 
 class KafkaSourceFactory extends SourceFactory with Logging {
-  override def getSource(config: Config): Source = {
+  override def getSource(config: Config, stream: String): Source = {
 
     val consumerProps = config.getConfig("kafka.consumer")
       .entrySet()
@@ -20,16 +19,22 @@ class KafkaSourceFactory extends SourceFactory with Logging {
     consumerProps.put("auto.commit.enable", "false")
     consumerProps.put("auto.offset.reset", "smallest")
 
+    if (!consumerProps.containsKey("group.id")) {
+      consumerProps.put("group.id", s"materialist-$stream")
+    }
+
     log.debug(s"Got properties: $consumerProps")
 
-    new KafkaSource(new ConsumerConfig(consumerProps), config.getString("kafka.topic"), config.getLong("batch.size"), config.getLong("batch.wait.ms"))
+    new KafkaSource(new ConsumerConfig(consumerProps), stream)
   }
 }
 
-class KafkaSource(consumerConfig: ConsumerConfig, topic: String, batchSize: Long, timeout: Long) extends Source with Logging {
+class KafkaSource(consumerConfig: ConsumerConfig, topic: String) extends Source with Logging {
 
   private var connector: ConsumerConnector = null
   private var stream: ConsumerIterator[Array[Byte], Array[Byte]] = null
+
+  override def toString = s"Kafka($topic)"
 
   override def start(): Unit = {
     stop()
@@ -45,27 +50,20 @@ class KafkaSource(consumerConfig: ConsumerConfig, topic: String, batchSize: Long
     }
   }
 
-  override def pull(): Iterable[Operation] = {
+  override def pull(): Iterable[StorageOperation] = {
     require(connector != null, "Source isn't started.")
 
-    val batch = mutable.Map.empty[String, Operation]
-    val start = System.currentTimeMillis()
-    while (batch.size < batchSize && (System.currentTimeMillis() - start) < timeout) {
-      if (stream.hasNext()) {
-        val next = stream.next()
-        val key = new String(next.key(), "utf-8")
-        val op = next.message() match {
-          case x if x == null ⇒ Delete(key, next.partition.toString)
-          case v ⇒ Upsert(key, next.partition.toString, new String(v, "utf-8"))
-        }
-
-        batch += key → op
-      } else {
-        log.trace("Nothing to read. Waiting 1000 ms.")
-        Thread.sleep(1000)
-      }
+    // todo: add partition info
+    if (stream.hasNext()) {
+      val next = stream.next()
+      val key = new String(next.key(), "utf-8")
+      Some(next.message() match {
+        case x if x == null ⇒ Delete(key)
+        case v ⇒ Upsert(key, new String(v, "utf-8"))
+      })
+    } else {
+      None
     }
-    batch.values
   }
 
   override def commit(): Unit = {

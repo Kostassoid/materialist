@@ -5,36 +5,38 @@ import scala.collection.JavaConversions._
 
 object AppConfig {
 
-  def getGroupings(configs: List[Config]): List[Grouping] = {
-    configs.map { g ⇒
-      val allow = if (g.hasPath("allow")) g.getStringList("allow").map(_.r).toList else Nil
-      val exclude = if (g.hasPath("exclude")) g.getStringList("exclude").map(_.r).toList else Nil
+  implicit class ConfigEx(c: Config) {
+    def getString(path: String, default: ⇒ String) = {
+      if (c.hasPath(path)) c.getString(path) else default
+    }
+  }
 
-      if (g.hasPath("group.pattern")) {
-        Grouping.fromRegex(allow, exclude, g.getString("group.pattern").r)
-      } else
-      if (g.hasPath("group.name")) {
-        Grouping.fromName(allow, exclude, g.getString("group.name"))
-      } else {
-        throw new Exception("Missing [group.name] or [group.regex] in grouping specification.")
-      }
+  def getRoutes(configs: List[Config]): List[RouteConfig] = {
+    configs.map { r ⇒
+      val from = r.getString("from")
+      val matchKey = r.getString("match.key", "_")
+      val to = r.getString("to", "_")
+
+      RouteConfig(from, matchKey, to)
     }
   }
 
   def apply(config: Config) =
     new AppConfig(
-      groupings = getGroupings(config.getConfigList("groupings").toList),
+      routes = getRoutes(config.getConfigList("routes").toList),
       sourceConfig = config.getConfig("source"),
       sourceFactory = Class.forName(config.getString("source.factory.class")).newInstance().asInstanceOf[SourceFactory],
       targetConfig = config.getConfig("target"),
-      targetFactory = Class.forName(config.getString("target.factory.class")).newInstance().asInstanceOf[TargetFactory]
+      targetFactory = Class.forName(config.getString("target.factory.class")).newInstance().asInstanceOf[TargetFactory],
+      checkpointInterval = config.getLong("checkpoint.interval")
     )
 }
 
 case class AppConfig(
-  groupings: List[Grouping],
-  sourceConfig: Config,
-  sourceFactory: SourceFactory,
-  targetConfig: Config,
-  targetFactory: TargetFactory
+                      routes: List[RouteConfig],
+                      sourceConfig: Config,
+                      sourceFactory: SourceFactory,
+                      targetConfig: Config,
+                      targetFactory: TargetFactory,
+                      checkpointInterval: Long
 )
