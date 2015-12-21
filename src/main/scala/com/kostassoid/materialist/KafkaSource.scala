@@ -24,7 +24,7 @@ class KafkaSourceFactory extends SourceFactory with Logging {
     consumerProps.put("auto.offset.reset", "smallest")
 
     if (!consumerProps.containsKey("group.id")) {
-      consumerProps.put("group.id", s"materialist")
+      consumerProps.put("group.id", s"materialist-$stream")
     }
 
     if (!consumerProps.containsKey("consumer.timeout.ms")) {
