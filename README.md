@@ -32,8 +32,8 @@ Routes define the source and the destination of data. Each route is processed se
 Key | Description | Example
 ----|-------------|--------
 from | Source stream name (e.g. topic for Kafka source) | billing
-to | Target stream name, if "_" then same as "from" | _
-match.key | A regex pattern to match keys. If omitted any key is allowed. | [ "^this", "that$"]
+to | Target stream name. If omitted then same as "from" |
+match.key | A regex pattern to match keys. If omitted any key is allowed. | "^this"
 
 ### source
 

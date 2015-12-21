@@ -35,14 +35,10 @@ packResourceDir += (baseDirectory.value / "src/main/resources" -> "conf")
 
 packJarNameConvention := "full"
 
-val akkaVer = "2.3.9"
-
 libraryDependencies ++= Seq(
   "org.apache.kafka"    %%  "kafka"                     % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12"),
   "org.mongodb.scala"   %%  "mongo-scala-driver"        % "1.0.0",
-//  "com.typesafe.akka"   %%  "akka-actor"                % akkaVer,
-//  "com.typesafe.akka"   %%  "akka-testkit"              % akkaVer   % "test",
-//  "com.typesafe.akka"   %%  "akka-stream-experimental"  % "2.0-M2",
+  "org.json4s"          %%  "json4s-native"             % "3.3.0",
   "nl.grons"            %%  "metrics-scala"             % "3.5.2_a2.3",
   "com.typesafe"        %   "config"                    % "1.2.1",
   "ch.qos.logback"      %   "logback-classic"           % "1.1.3" % "runtime",

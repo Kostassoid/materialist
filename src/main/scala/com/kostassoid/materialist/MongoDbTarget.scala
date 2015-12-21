@@ -35,6 +35,7 @@ class MongoDbTarget(connectionString: String, databaseName: String, stream: Stri
     log.info(s"Connecting to $connectionString")
     client = MongoClient(connectionString)
     db = client.getDatabase(databaseName)
+    log.trace(s"Started MongoDb target for $connectionString")
   }
 
   override def stop(): Unit = {
@@ -70,7 +71,7 @@ class MongoDbTarget(connectionString: String, databaseName: String, stream: Stri
               case _ ⇒ Document(value)
             }
             ReplaceOneModel(Document("_id" → BsonString(key)),
-              doc + ("_id" → BsonString(key), "_stream" → BsonString(stream)),
+              doc + ("_id" → BsonString(key)),
               updateOptions)
           } finally {
             reader.close()

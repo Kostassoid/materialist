@@ -7,15 +7,15 @@ class Coordinator(config: AppConfig) extends Runnable with Logging {
   lazy val workers = config.routes.map { route ⇒
 
     val targetStream = route.to match {
-      case "_" ⇒ route.from
-      case _ ⇒ route.to
+      case Some(to) ⇒ to
+      case None ⇒ route.from
     }
 
     val operationPredicate: StorageOperation ⇒ Boolean = route.matchKey match {
-      case "_" ⇒
+      case None ⇒
         _ ⇒ true
-      case _ ⇒
-        val keyMatcher = route.matchKey.r
+      case Some(keyRegex) ⇒
+        val keyMatcher = keyRegex.r
         op ⇒ keyMatcher.pattern.matcher(op.key).matches()
     }
 

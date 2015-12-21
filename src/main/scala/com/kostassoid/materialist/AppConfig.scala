@@ -6,16 +6,16 @@ import scala.collection.JavaConversions._
 object AppConfig {
 
   implicit class ConfigEx(c: Config) {
-    def getString(path: String, default: ⇒ String) = {
-      if (c.hasPath(path)) c.getString(path) else default
+    def getStringOpt(path: String) = {
+      if (c.hasPath(path)) Some(c.getString(path)) else None
     }
   }
 
   def getRoutes(configs: List[Config]): List[RouteConfig] = {
     configs.map { r ⇒
       val from = r.getString("from")
-      val matchKey = r.getString("match.key", "_")
-      val to = r.getString("to", "_")
+      val matchKey = r.getStringOpt("match.key")
+      val to = r.getStringOpt("to")
 
       RouteConfig(from, matchKey, to)
     }
