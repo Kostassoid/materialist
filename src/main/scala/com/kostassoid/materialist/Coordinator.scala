@@ -29,7 +29,7 @@ class Coordinator(config: AppConfig) extends Runnable with Logging {
 
   def run() = {
     try {
-      val futures = workers map { pool.submit }
+      workers map { pool.submit }
 
       pool.awaitTermination(Long.MaxValue, TimeUnit.DAYS) // todo: refactor
     } catch {
@@ -55,6 +55,4 @@ class Coordinator(config: AppConfig) extends Runnable with Logging {
       }
     }
   }
-
-
 }

@@ -36,11 +36,12 @@ packResourceDir += (baseDirectory.value / "src/main/resources" -> "conf")
 packJarNameConvention := "full"
 
 libraryDependencies ++= Seq(
-  "org.apache.kafka"    %%  "kafka"                     % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12"),
-  "org.mongodb.scala"   %%  "mongo-scala-driver"        % "1.0.0",
-  "org.json4s"          %%  "json4s-native"             % "3.3.0",
-  "nl.grons"            %%  "metrics-scala"             % "3.5.2_a2.3",
-  "com.typesafe"        %   "config"                    % "1.2.1",
-  "ch.qos.logback"      %   "logback-classic"           % "1.1.3" % "runtime",
-  "org.scalatest"       %%  "scalatest"                 % "2.2.1" % "test"
+  "org.apache.kafka"      %%  "kafka"                     % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12"),
+  "org.mongodb.scala"     %%  "mongo-scala-driver"        % "1.0.0",
+  "org.json4s"            %%  "json4s-native"             % "3.3.0",
+  "nl.grons"              %%  "metrics-scala"             % "3.5.2_a2.3",
+  "io.dropwizard.metrics" %   "metrics-graphite"          % "3.1.2",
+  "com.typesafe"          %   "config"                    % "1.2.1",
+  "ch.qos.logback"        %   "logback-classic"           % "1.1.3" % "runtime",
+  "org.scalatest"         %%  "scalatest"                 % "2.2.1" % "test"
 )

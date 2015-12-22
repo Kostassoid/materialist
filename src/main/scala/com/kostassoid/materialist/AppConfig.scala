@@ -23,6 +23,7 @@ object AppConfig {
 
   def apply(config: Config) =
     new AppConfig(
+      raw = config,
       routes = getRoutes(config.getConfigList("routes").toList),
       sourceConfig = config.getConfig("source"),
       sourceFactory = Class.forName(config.getString("source.factory.class")).newInstance().asInstanceOf[SourceFactory],
@@ -33,6 +34,7 @@ object AppConfig {
 }
 
 case class AppConfig(
+                      raw: Config,
                       routes: List[RouteConfig],
                       sourceConfig: Config,
                       sourceFactory: SourceFactory,

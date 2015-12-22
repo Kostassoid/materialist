@@ -60,8 +60,8 @@ When routes have been changed, it is most likely that the views have to be rebui
 ## Limitations
 
 - Both key and value must be UTF-8 strings (no null keys obviously).
+- Only JSON or primitive values are supported.
 - Kafka consumer currently uses single thread per topic.
-- no metrics reporting yet
 - no key names conflict (same keys from different partitions) resolution yet
 
 ## License

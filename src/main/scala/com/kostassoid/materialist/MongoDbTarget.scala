@@ -21,7 +21,7 @@ class MongoDbTargetFactory extends TargetFactory {
   }
 }
 
-class MongoDbTarget(connectionString: String, databaseName: String, stream: String, batchSize: Long) extends Target with Logging {
+class MongoDbTarget(connectionString: String, databaseName: String, stream: String, batchSize: Long) extends Target with Logging with Metrics {
 
   private var client: MongoClient = null
   private var db: MongoDatabase = null
@@ -95,11 +95,15 @@ class MongoDbTarget(connectionString: String, databaseName: String, stream: Stri
     }
   }
 
+  // todo: make tail-recursive
   //@tailrec
   private def applyOps(collection: MongoCollection[scala.Document], ops: Seq[WriteModel[_ <: Document]], promise: Promise[BulkWriteResult]): Promise[BulkWriteResult] = {
     collection.bulkWrite(ops, BulkWriteOptions().ordered(true)).subscribe(
       (completed: BulkWriteResult) ⇒ {
         // todo: check result
+
+        metrics.meter("mongodb.push").mark(ops.size)
+
         promise.success(completed)
       },
       (failed: Throwable) ⇒ {

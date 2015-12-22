@@ -31,7 +31,7 @@ class RouteWorker(route: Route, checkpointInterval: Long) extends Runnable with 
           batch filter { route.operationPredicate } foreach { route.target.push }
 
           if (System.currentTimeMillis() - checkpointTime > checkpointInterval) {
-            log.trace(s"Checkpoint for $route")
+            log.trace(s"Checkpoint for ${route.source} -> ${route.target}")
             route.target.flush()
             route.source.commit()
             checkpointTime = System.currentTimeMillis()

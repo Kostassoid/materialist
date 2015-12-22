@@ -48,7 +48,7 @@ object KafkaSource {
   }
 }
 
-class KafkaSource(consumerConfig: ConsumerConfig, topic: String) extends Source with Logging {
+class KafkaSource(consumerConfig: ConsumerConfig, topic: String) extends Source with Logging with Metrics {
 
   import KafkaSource._
 
@@ -79,9 +79,11 @@ class KafkaSource(consumerConfig: ConsumerConfig, topic: String) extends Source 
   override def pull(): Iterable[StorageOperation] = {
     require(connector != null, "Source isn't started.")
 
-    // todo: add partition info
     try {
       if (stream.hasNext()) {
+
+        metrics.meter("kafka.pull").mark()
+
         val next = stream.next()
         val key = new String(next.key(), "utf-8")
         Some(next.message() match {
