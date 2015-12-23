@@ -51,7 +51,7 @@ class Coordinator(config: AppConfig) extends Runnable with Logging {
       super.afterExecute(runnable, throwable)
       if (!isShutdown) {
         log.warn("Shutting down pool due to premature worker completion.")
-        Coordinator.this.shutdown()
+        shutdownNow()
       }
     }
   }

@@ -4,7 +4,7 @@ import java.net.{InetAddress, InetSocketAddress}
 import java.util.{Timer, TimerTask}
 
 import com.codahale.metrics.graphite.{Graphite, GraphiteReporter}
-import nl.grons.metrics.scala.{MetricName, InstrumentedBuilder}
+import nl.grons.metrics.scala.{FutureMetrics, MetricName, InstrumentedBuilder}
 
 object Metrics {
   val metricRegistry = new com.codahale.metrics.MetricRegistry()
@@ -25,7 +25,7 @@ object Metrics {
   }
 }
 
-trait Metrics extends InstrumentedBuilder {
+trait Metrics extends InstrumentedBuilder with FutureMetrics {
   override lazy val metricBaseName = MetricName("materialist")
 
   lazy val metricRegistry = Metrics.metricRegistry

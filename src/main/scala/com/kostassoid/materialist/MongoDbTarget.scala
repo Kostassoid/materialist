@@ -13,7 +13,7 @@ import org.mongodb.scala.model.{BulkWriteOptions, DeleteOneModel, ReplaceOneMode
 
 import _root_.scala.collection.mutable
 import _root_.scala.concurrent.duration.Duration
-import _root_.scala.concurrent.{Await, Future, Promise}
+import _root_.scala.concurrent.{ExecutionContext, Await, Future, Promise}
 
 class MongoDbTargetFactory extends TargetFactory {
   override def getTarget(config: Config, stream: String): Target =  {
@@ -22,6 +22,9 @@ class MongoDbTargetFactory extends TargetFactory {
 }
 
 class MongoDbTarget(connectionString: String, databaseName: String, stream: String, batchSize: Long) extends Target with Logging with Metrics {
+
+  // todo: refactor, needed just for metrics
+  private implicit val contextExecutor =  ExecutionContext.Implicits.global
 
   private var client: MongoClient = null
   private var db: MongoDatabase = null
@@ -83,7 +86,7 @@ class MongoDbTarget(connectionString: String, databaseName: String, stream: Stri
 
     if (buffer.nonEmpty) {
       waitForCompletion()
-      outstanding = Some(applyOps(collection, ops.toSeq, Promise[BulkWriteResult]()).future)
+      outstanding = Some(timing("mongodb.push.timer")(applyOps(collection, ops.toSeq, Promise[BulkWriteResult]()).future))
       buffer.clear()
     }
   }
@@ -95,14 +98,12 @@ class MongoDbTarget(connectionString: String, databaseName: String, stream: Stri
     }
   }
 
-  // todo: make tail-recursive
-  //@tailrec
   private def applyOps(collection: MongoCollection[scala.Document], ops: Seq[WriteModel[_ <: Document]], promise: Promise[BulkWriteResult]): Promise[BulkWriteResult] = {
     collection.bulkWrite(ops, BulkWriteOptions().ordered(true)).subscribe(
       (completed: BulkWriteResult) ⇒ {
         // todo: check result
 
-        metrics.meter("mongodb.push").mark(ops.size)
+        metrics.meter("mongodb.push.meter").mark(ops.size)
 
         promise.success(completed)
       },
@@ -115,7 +116,9 @@ class MongoDbTarget(connectionString: String, databaseName: String, stream: Stri
   }
 
   def flush() = {
-    saveBuffer()
-    waitForCompletion()
+    metrics.timer("mongodb.flush.timer").time {
+      saveBuffer()
+      waitForCompletion()
+    }
   }
 }

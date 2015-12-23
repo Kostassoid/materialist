@@ -82,14 +82,16 @@ class KafkaSource(consumerConfig: ConsumerConfig, topic: String) extends Source 
     try {
       if (stream.hasNext()) {
 
-        metrics.meter("kafka.pull").mark()
+        metrics.meter("kafka.pull.meter").mark()
 
-        val next = stream.next()
-        val key = new String(next.key(), "utf-8")
-        Some(next.message() match {
-          case x if x == null ⇒ Delete(key)
-          case v ⇒ Upsert(key, prepareValue(new String(v, "utf-8"), next.topic, next.partition))
-        })
+        metrics.timer("kafka.pull.timer").time {
+          val next = stream.next()
+          val key = new String(next.key(), "utf-8")
+          Some(next.message() match {
+            case x if x == null ⇒ Delete(key)
+            case v ⇒ Upsert(key, prepareValue(new String(v, "utf-8"), next.topic, next.partition))
+          })
+        }
       } else {
         None
       }
@@ -100,6 +102,8 @@ class KafkaSource(consumerConfig: ConsumerConfig, topic: String) extends Source 
   }
 
   override def commit(): Unit = {
-    connector.commitOffsets(true)
+    metrics.timer("kafka.commit.timer").time {
+      connector.commitOffsets(true)
+    }
   }
 }
